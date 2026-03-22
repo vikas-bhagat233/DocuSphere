@@ -9,10 +9,11 @@ import SharedView from "./pages/SharedView";
 import PublicPortfolio from "./pages/PublicPortfolio";
 import TrashBin from "./pages/TrashBin";
 import Profile from "./pages/Profile";
-
+import DocuBot from "./components/DocuBot";
 function App() {
   return (
     <BrowserRouter>
+      <DocuBot />
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/login" element={<Login />} />

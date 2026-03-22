@@ -8,6 +8,7 @@
     "dev": "nodemon server.js"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "aws-sdk": "^2.1563.0",
     "bcrypt": "^5.1.0",
     "cloudinary": "^2.9.0",
