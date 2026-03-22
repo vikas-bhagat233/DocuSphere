@@ -43,7 +43,8 @@ export default function DocuBot() {
       setMessages(prev => [...prev, { sender: 'bot', text: formattedReply }]);
     } catch (error) {
        console.error("DocuBot Error:", error);
-       setMessages(prev => [...prev, { sender: 'bot', text: "Oops, my Gemini connection had a glitch. Check your API key or backend logs!" }]);
+       const exactError = error.response?.data?.message || "Oops, my Gemini connection had a glitch. Check your API key or backend logs!";
+       setMessages(prev => [...prev, { sender: 'bot', text: exactError }]);
     } finally {
       setIsTyping(false);
     }
