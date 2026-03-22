@@ -15,15 +15,6 @@ exports.chatWithDocuBot = async (req, res) => {
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     
-    // Using gemini-1.5-flash-latest which is more stable across SDK versions
-    let model;
-    try {
-      model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    } catch (e) {
-      console.log("Flash failed, falling back to gemini-pro...");
-      model = genAI.getGenerativeModel({ model: "gemini-pro" });
-    }
-
     const systematicPrompt = `
       You are DocuBot, a highly intelligent, witty, and premium AI assistant built into the DocuSphere platform. 
       The user asking you this question has a secure document vault with the following files:
@@ -35,9 +26,19 @@ exports.chatWithDocuBot = async (req, res) => {
       User's question: "${prompt}"
     `;
 
-    const result = await model.generateContent(systematicPrompt);
-    const text = result.response.text();
+    // Modern SDKs sometimes fail on model strings in specific regions. 
+    // We try Flash first (fastest/best), then fallback to Pro (most stable).
+    let result;
+    try {
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      result = await model.generateContent(systematicPrompt);
+    } catch (e) {
+      console.warn("Gemini 1.5 Flash failed, falling back to Gemini Pro...", e.message);
+      const fallbackModel = genAI.getGenerativeModel({ model: "gemini-pro" });
+      result = await fallbackModel.generateContent(systematicPrompt);
+    }
 
+    const text = result.response.text();
     res.json({ reply: text });
   } catch (error) {
     res.status(500).json({ message: error.message });
