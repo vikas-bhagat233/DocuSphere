@@ -4,7 +4,7 @@ const Document = require('../models/Document');
 exports.chatWithDocuBot = async (req, res) => {
   try {
     const { prompt } = req.body;
-    
+
     if (!process.env.GEMINI_API_KEY) {
       return res.status(500).json({ message: "Gemini API Key is missing on the server!" });
     }
@@ -14,7 +14,7 @@ exports.chatWithDocuBot = async (req, res) => {
     const vaultContext = userDocs.map(d => `- ${d.title} (Category: ${d.category}, Tags: ${d.tags.join(', ')})`).join('\n');
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    
+
     const systematicPrompt = `
       You are DocuBot, a highly intelligent, witty, and premium AI assistant built into the DocuSphere platform. 
       The user asking you this question has a secure document vault with the following files:
@@ -30,7 +30,7 @@ exports.chatWithDocuBot = async (req, res) => {
     // We try Flash first (fastest/best), then fallback to Pro (most stable).
     let result;
     try {
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
       result = await model.generateContent(systematicPrompt);
     } catch (e) {
       console.warn("Gemini 1.5 Flash failed, falling back to Gemini Pro...", e.message);
