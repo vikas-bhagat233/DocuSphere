@@ -14,7 +14,15 @@ exports.chatWithDocuBot = async (req, res) => {
     const vaultContext = userDocs.map(d => `- ${d.title} (Category: ${d.category}, Tags: ${d.tags.join(', ')})`).join('\n');
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    
+    // Using gemini-1.5-flash-latest which is more stable across SDK versions
+    let model;
+    try {
+      model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    } catch (e) {
+      console.log("Flash failed, falling back to gemini-pro...");
+      model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    }
 
     const systematicPrompt = `
       You are DocuBot, a highly intelligent, witty, and premium AI assistant built into the DocuSphere platform. 
