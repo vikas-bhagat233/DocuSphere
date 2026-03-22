@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API = "http://localhost:5000/api/documents";
+const API = "https://docusphere-9xl0.onrender.com/api/documents";
 
 export const getDocs = async (token) => {
   const res = await axios.get(API, {
@@ -125,9 +125,9 @@ export const permanentlyDeleteDoc = async (id, token) => {
 
 export const uploadNewVersion = async (id, formData, token) => {
   const res = await axios.put(`${API}/${id}/file`, formData, {
-    headers: { 
+    headers: {
       "Content-Type": "multipart/form-data",
-      Authorization: `Bearer ${token}` 
+      Authorization: `Bearer ${token}`
     }
   });
   return res.data;
