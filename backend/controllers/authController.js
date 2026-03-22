@@ -4,69 +4,85 @@ const generateToken = require('../utils/generateToken');
 const uploadToCloudinary = require('../services/cloudinaryService');
 
 exports.signup = async (req, res) => {
-  const { name, email, password, securityQuestion, securityAnswer } = req.body;
+  try {
+    const { name, email, password, securityQuestion, securityAnswer } = req.body;
 
-  const userExists = await User.findOne({ email });
-  if (userExists) return res.status(400).json({ message: "User exists" });
+    const userExists = await User.findOne({ email });
+    if (userExists) return res.status(400).json({ message: "User exists" });
 
-  const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-  const user = await User.create({
-    name,
-    email,
-    password: hashedPassword,
-    username: email.split('@')[0] + '_' + Date.now(), // Fallback to satisfy legacy unique db index
-    securityQuestion: securityQuestion || "What is your mother's maiden name?",
-    securityAnswer: securityAnswer ? securityAnswer.toLowerCase().trim() : "default_answer"
-  });
+    const user = await User.create({
+      name,
+      email,
+      password: hashedPassword,
+      username: email.split('@')[0] + '_' + Date.now(),
+      securityQuestion: securityQuestion || "What is your mother's maiden name?",
+      securityAnswer: securityAnswer ? securityAnswer.toLowerCase().trim() : "default_answer"
+    });
 
-  res.json({
-    _id: user._id,
-    token: generateToken(user._id)
-  });
+    res.json({
+      _id: user._id,
+      token: generateToken(user._id)
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
 
 exports.login = async (req, res) => {
-  const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
 
-  const user = await User.findOne({ email });
-  if (!user) return res.status(400).json({ message: "Invalid email" });
+    const user = await User.findOne({ email });
+    if (!user) return res.status(400).json({ message: "Invalid email" });
 
-  const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) return res.status(400).json({ message: "Wrong password" });
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(400).json({ message: "Wrong password" });
 
-  res.json({
-    _id: user._id,
-    token: generateToken(user._id)
-  });
+    res.json({
+      _id: user._id,
+      token: generateToken(user._id)
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
 
 exports.getSecurityQuestion = async (req, res) => {
-  const { email } = req.body;
-  const user = await User.findOne({ email });
-  
-  if (!user) {
-    return res.status(404).json({ message: "No account found with this email" });
-  }
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+    
+    if (!user) {
+      return res.status(404).json({ message: "No account found with this email" });
+    }
 
-  res.json({ securityQuestion: user.securityQuestion });
+    res.json({ securityQuestion: user.securityQuestion });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
 
 exports.resetPassword = async (req, res) => {
-  const { email, securityAnswer, newPassword } = req.body;
-  
-  const user = await User.findOne({ email });
-  if (!user) return res.status(404).json({ message: "Account not found" });
+  try {
+    const { email, securityAnswer, newPassword } = req.body;
+    
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ message: "Account not found" });
 
-  if (user.securityAnswer !== securityAnswer.toLowerCase().trim()) {
-    return res.status(400).json({ message: "Security answer is incorrect" });
+    if (user.securityAnswer !== securityAnswer.toLowerCase().trim()) {
+      return res.status(400).json({ message: "Security answer is incorrect" });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    await user.save();
+
+    res.json({ message: "Password reset completely successfully!" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
-
-  const hashedPassword = await bcrypt.hash(newPassword, 10);
-  user.password = hashedPassword;
-  await user.save();
-
-  res.json({ message: "Password reset completely successfully!" });
 };
 
 exports.updateProfilePin = async (req, res) => {
