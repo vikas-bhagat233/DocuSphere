@@ -1,7 +1,7 @@
 import axios from "axios";
+import { API_BASE_URL } from "./apiBase";
 
-// Using the exact Render backend URL configuration from the documentService setup
-const API = "https://docusphere-9xl0.onrender.com/api/ai";
+const API = `${API_BASE_URL}/api/ai`;
 
 export const chatWithBot = async (prompt, token) => {
   const res = await axios.post(`${API}/chat`, { prompt }, {

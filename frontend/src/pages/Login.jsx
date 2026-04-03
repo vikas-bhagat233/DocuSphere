@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { login } from "../services/authService";
 import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
 
 export default function Login() {
   const [data, setData] = useState({});
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const { login: setAuthLogin } = useContext(AuthContext);
 
   const handleLogin = async () => {
     setError("");
@@ -17,7 +19,7 @@ export default function Login() {
 
     try {
       const res = await login(data);
-      localStorage.setItem("token", res.token);
+      setAuthLogin(res.token);
       navigate("/dashboard");
     } catch (err) {
       setError(err.response?.data?.message || "Login failed. Please try again.");

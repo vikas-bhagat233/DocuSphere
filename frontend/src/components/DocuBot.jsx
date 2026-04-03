@@ -1,13 +1,13 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useContext } from 'react';
 import { chatWithBot } from '../services/aiService';
+import { AuthContext } from '../context/AuthContext';
 
 export default function DocuBot() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([{ sender: 'bot', text: 'Hi! I am DocuBot ✨ I am connected to Gemini and I can see exactly what documents are inside your Vault right now. What would you like to know?' }]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  
-  const token = localStorage.getItem("token");
+  const { token, logout } = useContext(AuthContext);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -43,6 +43,13 @@ export default function DocuBot() {
       setMessages(prev => [...prev, { sender: 'bot', text: formattedReply }]);
     } catch (error) {
        console.error("DocuBot Error:", error);
+
+       if (error.response?.status === 401) {
+         logout();
+         setMessages(prev => [...prev, { sender: 'bot', text: 'Your session expired. Please log in again to continue using DocuBot.' }]);
+         return;
+       }
+
        const exactError = error.response?.data?.message || "Oops, my Gemini connection had a glitch. Check your API key or backend logs!";
        setMessages(prev => [...prev, { sender: 'bot', text: exactError }]);
     } finally {

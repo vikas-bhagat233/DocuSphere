@@ -135,3 +135,30 @@ exports.updateProfile = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+exports.searchUsers = async (req, res) => {
+  try {
+    const rawQuery = (req.query.q || "").trim();
+    const query = rawQuery.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+    const baseFilter = { _id: { $ne: req.user } };
+    const filter = query
+      ? {
+          ...baseFilter,
+          $or: [
+            { name: { $regex: query, $options: "i" } },
+            { username: { $regex: query, $options: "i" } }
+          ]
+        }
+      : baseFilter;
+
+    const users = await User.find(filter)
+      .select("_id name username bio profilePic")
+      .sort({ createdAt: -1 })
+      .limit(8);
+
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};

@@ -1,6 +1,7 @@
 import axios from "axios";
+import { API_BASE_URL } from "./apiBase";
 
-const API = "https://docusphere-9xl0.onrender.com/api/documents";
+const API = `${API_BASE_URL}/api/documents`;
 
 export const getDocs = async (token) => {
   const res = await axios.get(API, {

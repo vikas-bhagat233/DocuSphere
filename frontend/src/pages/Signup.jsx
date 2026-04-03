@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { signup } from "../services/authService";
 import { useNavigate, Link } from "react-router-dom";
-import Navbar from "../components/Navbar";
+import { AuthContext } from "../context/AuthContext";
 
 export default function Signup() {
   const [name, setName] = useState("");
@@ -10,6 +10,7 @@ export default function Signup() {
   const [securityQuestion, setSecurityQuestion] = useState("What is your mother's maiden name?");
   const [securityAnswer, setSecurityAnswer] = useState("");
   const navigate = useNavigate();
+  const { login } = useContext(AuthContext);
 
   const handleSignup = async (e) => {
     e.preventDefault();
@@ -19,7 +20,7 @@ export default function Signup() {
     }
     try {
       const data = await signup({ name, email, password, securityQuestion, securityAnswer });
-      localStorage.setItem("token", data.token);
+      login(data.token);
       navigate("/");
     } catch (error) {
       alert("Signup failed: " + (error.response?.data?.message || error.message));

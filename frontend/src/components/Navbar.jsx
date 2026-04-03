@@ -1,24 +1,44 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
-
-const mockUsers = [
-  { id: 1, name: "Alice Johnson", role: "Product Designer", avatar: "👩‍🎨" },
-  { id: 2, name: "Bob Smith", role: "Software Engineer", avatar: "👨‍💻" },
-  { id: 3, name: "Charlie Davis", role: "Marketing Manager", avatar: "👨‍💼" },
-  { id: 4, name: "Diana Prince", role: "Creator", avatar: "🦸‍♀️" },
-  { id: 5, name: "Evan Wright", role: "Content Creator", avatar: "👨‍🎤" },
-];
+import { useState, useEffect, useContext } from "react";
+import { AuthContext } from "../context/AuthContext";
+import axios from "axios";
+import { API_BASE_URL } from "../services/apiBase";
 
 const recentSearches = ["Alice Johnson", "Marketing strategies"];
 
 export default function Navbar() {
   const navigate = useNavigate();
-  const token = localStorage.getItem("token");
+  const { token, logout } = useContext(AuthContext);
   
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "dark");
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchFocus, setIsSearchFocus] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [friendResults, setFriendResults] = useState([]);
+
+  useEffect(() => {
+    if (!token || !isSearchFocus) {
+      setFriendResults([]);
+      return;
+    }
+
+    const timerId = setTimeout(async () => {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/api/auth/users/search`, {
+          params: { q: searchQuery },
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setFriendResults(response.data || []);
+      } catch (error) {
+        if (error.response?.status === 401) {
+          logout();
+        }
+        setFriendResults([]);
+      }
+    }, 250);
+
+    return () => clearTimeout(timerId);
+  }, [searchQuery, token, isSearchFocus, logout]);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -30,8 +50,14 @@ export default function Navbar() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
+    logout();
     navigate("/");
+  };
+
+  const navigateToFriend = (friendId) => {
+    navigate(`/u/${friendId}`);
+    setSearchQuery("");
+    setIsSearchFocus(false);
   };
 
   return (
@@ -60,25 +86,25 @@ export default function Navbar() {
                    <div className="dropdown-header">Recent Searches</div>
                    {recentSearches.map(s => <div key={s} className="search-item" onClick={() => setSearchQuery(s)}>🕒 {s}</div>)}
                    <div className="dropdown-header">Suggested Friends</div>
-                   {mockUsers.slice(0, 2).map(u => (
-                     <div key={u.id} className="search-item friend-item" onClick={() => navigate(`/profile/${u.id}`)}>
-                       <span className="avatar">{u.avatar}</span>
+                   {friendResults.length > 0 ? friendResults.slice(0, 3).map(u => (
+                     <div key={u._id} className="search-item friend-item" onClick={() => navigateToFriend(u._id)}>
+                       <span className="avatar">👤</span>
                        <div>
                           <div className="friend-name">{u.name}</div>
-                          <div className="friend-role">{u.role}</div>
+                          <div className="friend-role">@{u.username || "user"}</div>
                        </div>
                      </div>
-                   ))}
+                   )) : <div className="search-item">No friend suggestions yet</div>}
                  </>
                ) : (
                  <>
-                   {mockUsers.filter(u => u.name.toLowerCase().includes(searchQuery.toLowerCase())).length > 0 ? (
-                     mockUsers.filter(u => u.name.toLowerCase().includes(searchQuery.toLowerCase())).map(u => (
-                       <div key={u.id} className="search-item friend-item" onClick={() => navigate(`/profile/${u.id}`)}>
-                         <span className="avatar">{u.avatar}</span>
+                   {friendResults.length > 0 ? (
+                     friendResults.map(u => (
+                       <div key={u._id} className="search-item friend-item" onClick={() => navigateToFriend(u._id)}>
+                         <span className="avatar">👤</span>
                          <div>
                             <div className="friend-name">{u.name}</div>
-                            <div className="friend-role">{u.role}</div>
+                            <div className="friend-role">@{u.username || "user"}</div>
                          </div>
                        </div>
                      ))

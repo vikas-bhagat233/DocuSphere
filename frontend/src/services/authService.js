@@ -1,6 +1,7 @@
 import axios from "axios";
+import { API_BASE_URL } from "./apiBase";
 
-const API = "https://docusphere-9xl0.onrender.com/api/auth";
+const API = `${API_BASE_URL}/api/auth`;
 
 export const login = async (userData) => {
   const res = await axios.post(`${API}/login`, userData);

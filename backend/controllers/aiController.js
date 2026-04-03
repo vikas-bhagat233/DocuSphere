@@ -15,7 +15,7 @@ exports.chatWithDocuBot = async (req, res) => {
 
     // This is the absolute fix to force 'v1' instead of 'v1beta'
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY, { apiVersion: "v1" });
-    
+
     const systematicPrompt = `
       You are DocuBot, a highly intelligent, witty, and premium AI assistant built into the DocuSphere platform. 
       The user asking you this question has a secure document vault with the following files:
@@ -27,15 +27,12 @@ exports.chatWithDocuBot = async (req, res) => {
       User's question: "${prompt}"
     `;
 
-    let result;
-    try {
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-      result = await model.generateContent(systematicPrompt);
-    } catch (e) {
-      console.warn("Gemini 1.5 Flash failed, falling back to gemini-pro...", e.message);
-      const fallbackModel = genAI.getGenerativeModel({ model: "gemini-pro" });
-      result = await fallbackModel.generateContent(systematicPrompt);
-    }
+    const requestedModel = (process.env.GEMINI_MODEL || "gemini-2.5-flash").trim();
+    const blockedLegacyModels = new Set(["gemini-pro", "gemini-pro-latest", "gemini-1.0-pro"]);
+    const modelName = blockedLegacyModels.has(requestedModel) ? "gemini-2.5-flash" : requestedModel;
+
+    const model = genAI.getGenerativeModel({ model: modelName });
+    const result = await model.generateContent(systematicPrompt);
 
     const text = result.response.text();
     res.json({ reply: text });
