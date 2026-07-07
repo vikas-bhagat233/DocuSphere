@@ -1,0 +1,4 @@
+secret:
+  ignored_matches:
+    - name: Tin-managed PostHog public browser ingestion key
+      match: phc_mWJMPvwccYnAArBrZ8o9jQfCU6pRpEe6S9Fw9tW5urHH

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useContext } from 'react';
 import { chatWithBot } from '../services/aiService';
 import { AuthContext } from '../context/AuthContext';
+import { trackEvent } from '../services/analyticsService';
 
 export default function DocuBot() {
   const [isOpen, setIsOpen] = useState(false);
@@ -27,6 +28,7 @@ export default function DocuBot() {
     e.preventDefault();
     if (!input.trim()) return;
 
+    trackEvent("docubot_question_submitted");
     const userMessage = { sender: 'user', text: input };
     setMessages(prev => [...prev, userMessage]);
     setInput('');
@@ -41,8 +43,10 @@ export default function DocuBot() {
           .replace(/\n/g, '<br/>');
 
       setMessages(prev => [...prev, { sender: 'bot', text: formattedReply }]);
+      trackEvent("docubot_answer_completed");
     } catch (error) {
        console.error("DocuBot Error:", error);
+       trackEvent("docubot_answer_failed", { status: error.response?.status || "network" });
 
        if (error.response?.status === 401) {
          logout();
@@ -59,7 +63,11 @@ export default function DocuBot() {
 
   return (
     <div className="docubot-wrapper">
-      <button className="docubot-toggle" onClick={() => setIsOpen(!isOpen)}>
+      <button className="docubot-toggle" onClick={() => {
+        const nextIsOpen = !isOpen;
+        setIsOpen(nextIsOpen);
+        trackEvent(nextIsOpen ? "docubot_opened" : "docubot_closed");
+      }}>
          {isOpen ? "✖ Close" : "✨ DocuBot"}
       </button>
 
