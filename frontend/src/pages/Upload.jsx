@@ -2,6 +2,19 @@ import { useState, useRef } from "react";
 import { uploadDoc } from "../services/documentService";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
+import { trackEvent } from "../services/analyticsService";
+
+const getFileExtension = (fileName = "") => {
+  const parts = fileName.split(".");
+  return parts.length > 1 ? parts.pop().toLowerCase() : "unknown";
+};
+
+const getFileSizeBucket = (size = 0) => {
+  if (size < 1024 * 1024) return "under_1mb";
+  if (size < 10 * 1024 * 1024) return "1mb_to_10mb";
+  if (size < 50 * 1024 * 1024) return "10mb_to_50mb";
+  return "over_50mb";
+};
 
 export default function Upload() {
   const [file, setFile] = useState(null);
@@ -32,29 +45,52 @@ export default function Upload() {
     e.preventDefault();
     setIsDragging(false);
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      setFile(e.dataTransfer.files[0]);
-      if (!title) setTitle(e.dataTransfer.files[0].name.split('.')[0]); 
+      const droppedFile = e.dataTransfer.files[0];
+      setFile(droppedFile);
+      trackEvent("document_file_selected", {
+        source: "drop",
+        file_type: getFileExtension(droppedFile.name),
+        file_size_bucket: getFileSizeBucket(droppedFile.size)
+      });
+      if (!title) setTitle(droppedFile.name.split('.')[0]);
     }
   };
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files.length > 0) {
-      setFile(e.target.files[0]);
-      if (!title) setTitle(e.target.files[0].name.split('.')[0]);
+      const selectedFile = e.target.files[0];
+      setFile(selectedFile);
+      trackEvent("document_file_selected", {
+        source: "browse",
+        file_type: getFileExtension(selectedFile.name),
+        file_size_bucket: getFileSizeBucket(selectedFile.size)
+      });
+      if (!title) setTitle(selectedFile.name.split('.')[0]);
     }
   };
 
   const handleUpload = async () => {
     if (!file) {
       alert("Please select or drop a file first.");
+      trackEvent("document_upload_failed", { reason: "missing_file" });
       return;
     }
     if (!title) {
       alert("Please enter a document name.");
+      trackEvent("document_upload_failed", { reason: "missing_title" });
       return;
     }
     
     setUploading(true);
+    const uploadProperties = {
+      file_type: getFileExtension(file.name),
+      file_size_bucket: getFileSizeBucket(file.size),
+      has_expiry: Boolean(expiryDate),
+      has_pin: Boolean(pin),
+      has_tags: Boolean(tags),
+      has_reminder: Boolean(reminderDate)
+    };
+    trackEvent("document_upload_submitted", uploadProperties);
     try {
       const formData = new FormData();
       formData.append("file", file);
@@ -66,10 +102,15 @@ export default function Upload() {
       if (reminderDate) formData.append("reminderDate", reminderDate);
 
       await uploadDoc(formData, token);
+      trackEvent("document_upload_completed", uploadProperties);
       alert("Uploaded & Secured Successfully");
       navigate("/documents"); 
     } catch (error) {
       alert("Upload failed: " + (error.response?.data?.message || error.message));
+      trackEvent("document_upload_failed", {
+        ...uploadProperties,
+        status: error.response?.status || "network"
+      });
     } finally {
       setUploading(false);
     }

@@ -2,6 +2,7 @@ import { useContext, useState } from "react";
 import { signup } from "../services/authService";
 import { useNavigate, Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
+import { identifyUserFromToken, trackEvent } from "../services/analyticsService";
 
 export default function Signup() {
   const [name, setName] = useState("");
@@ -14,16 +15,21 @@ export default function Signup() {
 
   const handleSignup = async (e) => {
     e.preventDefault();
+    trackEvent("signup_submitted");
     if (!securityAnswer) {
       alert("Please provide a security answer.");
+      trackEvent("signup_failed", { reason: "missing_security_answer" });
       return;
     }
     try {
       const data = await signup({ name, email, password, securityQuestion, securityAnswer });
       login(data.token);
+      identifyUserFromToken(data.token);
+      trackEvent("signup_completed");
       navigate("/");
     } catch (error) {
       alert("Signup failed: " + (error.response?.data?.message || error.message));
+      trackEvent("signup_failed", { status: error.response?.status || "network" });
     }
   };
 

@@ -2,6 +2,7 @@ import { useContext, useState } from "react";
 import { login } from "../services/authService";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
+import { identifyUserFromToken, trackEvent } from "../services/analyticsService";
 
 export default function Login() {
   const [data, setData] = useState({});
@@ -11,18 +12,23 @@ export default function Login() {
 
   const handleLogin = async () => {
     setError("");
+    trackEvent("login_submitted");
 
     if (!data.email || !data.password) {
       setError("Email and password are required.");
+      trackEvent("login_failed", { reason: "missing_credentials" });
       return;
     }
 
     try {
       const res = await login(data);
       setAuthLogin(res.token);
+      identifyUserFromToken(res.token);
+      trackEvent("login_completed");
       navigate("/dashboard");
     } catch (err) {
       setError(err.response?.data?.message || "Login failed. Please try again.");
+      trackEvent("login_failed", { status: err.response?.status || "network" });
     }
   };
 
