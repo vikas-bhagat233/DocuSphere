@@ -35,9 +35,12 @@ export default function Login() {
         </div>
         
         <div style={{ marginBottom: "1.5rem" }}>
-          <label>Vault Identity (Email)</label>
+          <label htmlFor="login-email">Vault Identity (Email)</label>
           <input 
+            id="login-email"
+            name="email"
             type="email" 
+            autoComplete="email"
             placeholder="e.g. vikas@docu.sphere" 
             onChange={(e)=>setData({...data,email:e.target.value})}
             style={{ marginTop: "10px" }}
@@ -45,10 +48,13 @@ export default function Login() {
         </div>
 
         <div style={{ marginBottom: "2rem" }}>
-          <label>Access Key (Password)</label>
+          <label htmlFor="login-password">Access Key (Password)</label>
           <input 
+            id="login-password"
+            name="password"
             placeholder="••••••••" 
             type="password" 
+            autoComplete="current-password"
             onChange={(e)=>setData({...data,password:e.target.value})}
             style={{ marginTop: "10px" }}
           />
