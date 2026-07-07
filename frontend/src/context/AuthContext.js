@@ -1,4 +1,5 @@
 import { createContext, useState } from "react";
+import { resetAnalyticsIdentity } from "../services/analyticsService";
 
 export const AuthContext = createContext();
 
@@ -12,6 +13,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     localStorage.removeItem("token");
+    resetAnalyticsIdentity();
     setToken(null);
   };
 
