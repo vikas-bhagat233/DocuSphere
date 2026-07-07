@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { useEffect } from "react";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -10,9 +11,27 @@ import PublicPortfolio from "./pages/PublicPortfolio";
 import TrashBin from "./pages/TrashBin";
 import Profile from "./pages/Profile";
 import DocuBot from "./components/DocuBot";
+import { getRouteName, identifyUserFromToken, initAnalytics, trackPageView } from "./services/analyticsService";
+
+function AnalyticsRouteTracker() {
+  const location = useLocation();
+
+  useEffect(() => {
+    initAnalytics();
+  }, []);
+
+  useEffect(() => {
+    identifyUserFromToken(localStorage.getItem("token"));
+    trackPageView(getRouteName(location.pathname));
+  }, [location.pathname]);
+
+  return null;
+}
+
 function App() {
   return (
     <BrowserRouter>
+      <AnalyticsRouteTracker />
       <DocuBot />
       <Routes>
         <Route path="/" element={<Login />} />
