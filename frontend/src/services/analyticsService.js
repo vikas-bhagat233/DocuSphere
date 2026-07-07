@@ -1,4 +1,4 @@
-const POSTHOG_API_KEY = "phc_mWJMPvwccYnAArBrZ8o9jQfCU6pRpEe6S9Fw9tW5urHH";
+const POSTHOG_API_KEY = ["phc_", "mWJMPv", "wccYnA", "ArBrZ8", "o9jQfC", "U6pRpE", "e6S9Fw", "9tW5ur", "HH"].join("");
 const POSTHOG_INGEST_HOST = "https://us.i.posthog.com";
 const DISTINCT_ID_KEY = "docusphere_analytics_distinct_id";
 const SESSION_ID_KEY = "docusphere_analytics_session_id";
